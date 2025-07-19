@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Urbex Scope – Karte</title>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Unbounded', sans-serif;
+      background: #000;
+      color: #eee;
+    }
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
+    .custom-popup {
+      border: 2px solid orange;
+      border-radius: 8px;
+      padding: 5px;
+      background: rgba(0,0,0,0.85);
+      color: white;
+      animation: pulse 2s infinite;
+      max-width: 300px;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 5px orange; }
+      50% { box-shadow: 0 0 15px orange; }
+      100% { box-shadow: 0 0 5px orange; }
+    }
+    select, textarea, button {
+      margin-top: 5px;
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.9em;
+    }
+    button {
+      margin-top: 8px;
+      background: orange;
+      border: none;
+      padding: 6px;
+      color: black;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: darkorange;
+    }
+    img.static-map {
+      width: 100%;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .bewertungen {
+      font-size: 0.85em;
+      margin-top: 6px;
+    }
+    .kommentar {
+      border-top: 1px solid #555;
+      padding-top: 4px;
+      margin-top: 4px;
+    }
+    .kommentarliste {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script>
+    // Firebase Konfiguration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDP11V-Ak2493nSbA86KDKhRZ9-_tsbn8g",
+      authDomain: "urbex-84e56.firebaseapp.com",
+      databaseURL: "https://urbex-84e56-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "urbex-84e56",
+      storageBucket: "urbex-84e56.firebasestorage.app",
+      messagingSenderId: "796594486921",
+      appId: "1:796594486921:web:762179cc5aa1f05cea5058",
+      measurementId: "G-F3Q6ZQG0GY"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Karte erstellen
+    const map = L.map('map').setView([51.1657, 10.4515], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    const markerCluster = L.markerClusterGroup();
+
+    fetch('orte.json')
+      .then(response => response.json())
+      .then(data => {
+        data.forEach(ort => {
+          const marker = L.marker([ort.lat, ort.lng]);
+          const popupId = ort.name.replace(/\s+/g, "_");
+
+          const staticMapURL = `https://staticmap.openstreetmap.de/staticmap.php?center=${ort.lat},${ort.lng}&zoom=15&size=300x200&markers=${ort.lat},${ort.lng},red-pushpin`;
+
+          const popupHTML = `
+            <div class="custom-popup" id="popup-${popupId}">
+              <img src="${staticMapURL}" alt="Kartenansicht" class="static-map" />
+              <b>${ort.name}</b><br>${ort.beschreibung}<br><br>
+
+              <div class="bewertungen" id="bewertung-${popupId}">⏳ Lade Bewertungen...</div>
+              <div class="kommentarliste" id="kommentare-${popupId}"></div><br>
+
+              <label for="rating-${popupId}">⭐ Deine Bewertung:</label>
+              <select id="rating-${popupId}">
+                <option value="1">1 Stern</option>
+                <option value="2">2 Sterne</option>
+                <option value="3">3 Sterne</option>
+                <option value="4">4 Sterne</option>
+                <option value="5">5 Sterne</option>
+              </select><br>
+
+              <textarea id="comment-${popupId}" rows="2" placeholder="Dein Kommentar..."></textarea><br>
+              <button onclick="submitReview('${popupId}', '${ort.name}')">Absenden</button>
+            </div>
+          `;
+
+          marker.bindPopup(popupHTML);
+
+          marker.on('popupopen', () => {
+            loadBewertungen(ort.name, popupId);
+          });
+
+          markerCluster.addLayer(marker);
+        });
+
+        map.addLayer(markerCluster);
+      });
+
+    function submitReview(popupId, ortName) {
+      const rating = document.querySelector(`#rating-${popupId}`).value;
+      const comment = document.querySelector(`#comment-${popupId}`).value;
+
+      if (!rating || !comment) {
+        alert("Bitte Bewertung und Kommentar ausfüllen.");
+        return;
+      }
+
+      const bewertung = {
+        rating: parseInt(rating),
+        comment: comment,
+        timestamp: Date.now()
+      };
+
+      firebase.database().ref("bewertungen/" + ortName).push(bewertung)
+        .then(() => {
+          alert("Danke für deine Bewertung!");
+          loadBewertungen(ortName, popupId);
+        })
+        .catch(error => {
+          alert("Fehler beim Speichern: " + error.message);
+        });
+    }
+
+    function loadBewertungen(ortName, popupId) {
+      const ref = firebase.database().ref("bewertungen/" + ortName);
+      ref.once("value", snapshot => {
+        const data = snapshot.val();
+        if (!data) {
+          document.getElementById(`bewertung-${popupId}`).innerText = "Noch keine Bewertungen.";
+          document.getElementById(`kommentare-${popupId}`).innerHTML = "";
+          return;
+        }
+
+        const ratings = Object.values(data).map(e => e.rating);
+        const avg = (ratings.reduce((a,b) => a + b, 0) / ratings.length).toFixed(1);
+        document.getElementById(`bewertung-${popupId}`).innerText = `⭐ ${avg} von 5 Sternen (${ratings.length} Bewertungen)`;
+
+        const kommentare = Object.values(data)
+          .filter(e => e.comment)
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .map(e => `<div class="kommentar">💬 ${e.comment}</div>`).join('');
+
+        document.getElementById(`kommentare-${popupId}`).innerHTML = kommentare || "Keine Kommentare.";
+      });
+    }
+  </script>
+</body>
+</html>

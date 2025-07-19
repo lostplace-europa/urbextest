@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Galerie – Urbex Scope</title>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: #eee;
+      font-family: 'Unbounded', sans-serif;
+    }
+    h1 {
+      text-align: center;
+      color: orange;
+      padding: 40px 20px 20px;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      padding: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .placeholder {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border: 2px dashed orange;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: orange;
+      font-size: 1.2rem;
+      background: rgba(255,165,0,0.05);
+      box-shadow: 0 0 8px rgba(255,165,0,0.15);
+    }
+    .instagram-section {
+      background: #111;
+      padding: 60px 20px;
+      text-align: center;
+    }
+    .instagram-section h2 {
+      color: orange;
+      margin-bottom: 30px;
+    }
+    .insta-embeds {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+    }
+    .insta-embeds iframe {
+      border: none;
+      width: 100%;
+      max-width: 360px;
+      height: 600px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(200,200,200,0.2);
+      background: #222;
+    }
+    @media (max-width: 900px) {
+      .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 600px) {
+      .gallery-grid {
+        grid-template-columns: 1fr;
+      }
+      .insta-embeds iframe {
+        height: 500px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Galerie</h1>
+  <div class="gallery-grid">
+    <div class="placeholder">Bild 1</div>
+    <div class="placeholder">Bild 2</div>
+    <div class="placeholder">Bild 3</div>
+    <div class="placeholder">Bild 4</div>
+    <div class="placeholder">Bild 5</div>
+    <div class="placeholder">Bild 6</div>
+  </div>
+  <section class="instagram-section">
+    <h2>Unsere Instagram-Beiträge</h2>
+    <div class="insta-embeds">
+      <iframe src="https://www.instagram.com/p/CiaiLxNK9J4/embed" allowtransparency="true"></iframe>
+      <iframe src="https://www.instagram.com/p/C4AubAnNXzx/embed" allowtransparency="true"></iframe>
+      <iframe src="https://www.instagram.com/p/DL5OoAqt-K4/embed" allowtransparency="true"></iframe>
+      <iframe src="https://www.instagram.com/p/DLwijASte-1/embed" allowtransparency="true"></iframe>
+      <iframe src="https://www.instagram.com/p/DLiL7sqNdj6/embed" allowtransparency="true"></iframe>
+      <iframe src="https://www.instagram.com/p/DLQQPxqtZ6E/embed" allowtransparency="true"></iframe>
+    </div>
+  </section>
+</body>
+</html>
